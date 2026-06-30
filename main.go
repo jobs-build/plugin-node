@@ -1,7 +1,8 @@
-// Command nodeplugin is a JOBS build plugin (build.md §6) for Node/Yarn projects.
-// It reads a CBOR request {call:{yarn_lock:<bytes>}, source} on stdin, turns a
-// Yarn (v1) lockfile into one import spec per package (fetcher "npm", pinned by
-// the Subresource-Integrity digest), and writes the CBOR response (an array of
+// Command nodeplugin is a JOBS build plugin (build.md §6) for Node projects.
+// It reads a CBOR request {call:{yarn_lock|package_lock:<bytes>}, source} on
+// stdin, turns a Yarn classic (v1) lockfile OR an npm package-lock.json (v2/v3)
+// into one import spec per package (fetcher "npm", pinned by the
+// Subresource-Integrity digest), and writes the CBOR response (an array of
 // {name, version, input}) on stdout. Network-free and statically linked (CGO
 // disabled), so it runs in the hermetic plugin sandbox.
 package main
@@ -11,8 +12,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/jobs-build/plugin-node/internal/importdef"
 	"github.com/fxamacker/cbor/v2"
+	"github.com/jobs-build/plugin-node/internal/importdef"
 )
 
 type request struct {
@@ -48,17 +49,7 @@ func run(stdin io.Reader, stdout io.Writer) error {
 		return fmt.Errorf("decode request: %w", err)
 	}
 
-	var lock []byte
-	switch v := req.Call["yarn_lock"].(type) {
-	case []byte:
-		lock = v
-	case string:
-		lock = []byte(v)
-	default:
-		return fmt.Errorf("yarn_lock kwarg missing or not bytes/string (got %T)", req.Call["yarn_lock"])
-	}
-
-	pkgs, err := parseYarnLock(lock)
+	pkgs, err := parseRequest(req)
 	if err != nil {
 		return err
 	}
@@ -79,6 +70,37 @@ func run(stdin io.Reader, stdout io.Writer) error {
 		return fmt.Errorf("write response: %w", err)
 	}
 	return nil
+}
+
+// parseRequest selects the lockfile parser by which kwarg is present: package_lock
+// (npm package-lock.json v2/v3) takes precedence, else yarn_lock (yarn classic v1).
+func parseRequest(req request) ([]npmPackage, error) {
+	if v, ok := req.Call["package_lock"]; ok {
+		lock, err := asBytes("package_lock", v)
+		if err != nil {
+			return nil, err
+		}
+		return parsePackageLock(lock)
+	}
+	if v, ok := req.Call["yarn_lock"]; ok {
+		lock, err := asBytes("yarn_lock", v)
+		if err != nil {
+			return nil, err
+		}
+		return parseYarnLock(lock)
+	}
+	return nil, fmt.Errorf("request needs a package_lock or yarn_lock kwarg")
+}
+
+func asBytes(name string, v any) ([]byte, error) {
+	switch t := v.(type) {
+	case []byte:
+		return t, nil
+	case string:
+		return []byte(t), nil
+	default:
+		return nil, fmt.Errorf("%s kwarg not bytes/string (got %T)", name, v)
+	}
 }
 
 // pkgInput builds the npm import spec: a canonical importdef for fetcher "npm"

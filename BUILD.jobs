@@ -25,4 +25,4 @@ go build -o "$out/plugin" .
 cp "$SRC/fetch" "$out/fetch"
 chmod +x "$out/plugin" "$out/fetch"
 """
-    return struct(inputs = {"toolchain": toolchain}, env = {}, script = script, runtime_deps = [])
+    return struct(name = "node plugin", inputs = {"toolchain": toolchain}, env = {}, script = script, runtime_deps = [])

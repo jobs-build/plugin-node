@@ -23,6 +23,7 @@ chmod -R u+w "$GOROOT" 2>/dev/null || true
 cd "$SRC"
 go build -o "$out/plugin" .
 cp "$SRC/fetch" "$out/fetch"
+cp "$SRC/fetchers.toml" "$out/fetchers.toml"
 chmod +x "$out/plugin" "$out/fetch"
 """
     return struct(name = "node plugin", inputs = {"toolchain": toolchain}, env = {}, script = script, runtime_deps = [])

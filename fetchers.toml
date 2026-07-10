@@ -1,0 +1,8 @@
+# Companion fetcher pins for the imports this plugin emits
+# (JOBS recipe-declared-fetchers design §7). Bundled into the plugin artifact
+# root AND its fetch output; the JOBS pin stage injects these as FetcherDef
+# into every emitted import. Bump together with the plugin.
+[[fetcher]]
+name   = "npm"
+url    = "https://github.com/jobs-build/fetcher-npm/archive/30781dcc4dd9a5f2eeaa09446d1815bd6ea1cc21.tar.gz"
+sha256 = "800f27d70bca0e0dc71a0d5c5a971a617e55cca22f39010ccb024b22e83cac94"

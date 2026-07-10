@@ -14,4 +14,5 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 	exit 1
 }
 cp "$here/plugin" "$out/plugin"
+cp "$here/fetchers.toml" "$out/fetchers.toml"
 chmod +x "$out/plugin"

@@ -23,6 +23,12 @@ func parseYarnLock(data []byte) ([]npmPackage, error) {
 	var cur *npmPackage
 	flush := func() {
 		if cur != nil && cur.URL != "" && cur.Integrity != "" {
+			// Aliased entries ("alias@npm:real@ver") carry the ALIAS in the
+			// header, but yarn's offline-mirror lookup derives the filename
+			// from the resolved URL — take the real identity from the URL.
+			if name, ok := nameFromRegistryURL(cur.URL); ok {
+				cur.Name = name
+			}
 			out = append(out, *cur)
 		}
 		cur = nil
@@ -96,4 +102,21 @@ func nameFromHeader(h string) (string, error) {
 
 func unquote(s string) string {
 	return strings.Trim(strings.TrimSpace(s), `"`)
+}
+
+// nameFromRegistryURL extracts the real package name from a registry tarball
+// URL of the form …/(@scope/)?name/-/name-version.tgz. ok is false for any
+// other URL shape (git tarballs etc.), leaving the header-derived name.
+func nameFromRegistryURL(u string) (string, bool) {
+	segs := strings.Split(u, "/")
+	for i, s := range segs {
+		if s == "-" && i >= 1 && i < len(segs)-1 {
+			name := segs[i-1]
+			if i >= 2 && strings.HasPrefix(segs[i-2], "@") {
+				name = segs[i-2] + "/" + name
+			}
+			return name, true
+		}
+	}
+	return "", false
 }

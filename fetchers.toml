@@ -4,5 +4,5 @@
 # into every emitted import. Bump together with the plugin.
 [[fetcher]]
 name   = "npm"
-url    = "https://github.com/jobs-build/fetcher-npm/archive/30781dcc4dd9a5f2eeaa09446d1815bd6ea1cc21.tar.gz"
-sha256 = "800f27d70bca0e0dc71a0d5c5a971a617e55cca22f39010ccb024b22e83cac94"
+url    = "https://github.com/jobs-build/fetcher-npm/archive/refs/tags/v0.1.0.tar.gz"
+sha256 = "8468fde0c484d91b71e3630d4e7cec4ccc5553b08eeb5ce3d7dab94e6e73e8ed"
